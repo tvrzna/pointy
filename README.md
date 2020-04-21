@@ -1,8 +1,19 @@
 # pointy
+[![javadoc](https://javadoc.io/badge2/cz.tvrzna/pointy/0.1.0/javadoc.svg)](https://javadoc.io/doc/cz.tvrzna/pointy/0.1.0)
+
 Micro web framework with built-in HTTP server.
 
 ## What is pointy good for?
 Making of micro-service, that should be server-less, often brings tons of dependencies, that are inadequately large and heavy. Pointy brings simple routing with built-in HTTP server.
+
+## Installation
+```xml
+<dependency>
+    <groupId>cz.tvrzna</groupId>
+    <artifactId>pointy</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
 
 ## Example
 The most simple web server, that listens on http://0.0.0.0:8080/hello-world
