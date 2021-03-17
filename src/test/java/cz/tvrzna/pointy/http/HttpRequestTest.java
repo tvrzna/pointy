@@ -1,6 +1,7 @@
 package cz.tvrzna.pointy.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -103,4 +104,21 @@ public class HttpRequestTest
 		request.toString();
 	}
 
+	@Test
+	public void testPostFormData() throws IOException
+	{
+		final String httpRequest = "POST / HTTP/1.1\n" + "Host: localhost:1400\n" + "Origin: http://localhost:8080\n" + "Content-Type: application/x-www-form-urlencoded\n" + "\n" +
+				"area=something+useful&data=something+less+useful";
+
+		ByteArrayInputStream bais = new ByteArrayInputStream(httpRequest.getBytes());
+		Mockito.when(socket.getInputStream()).thenReturn(bais);
+		Mockito.when(socket.getRemoteSocketAddress()).thenReturn(socketAddress);
+		Mockito.when(socketAddress.toString()).thenReturn("127.0.0.1:1555/");
+
+		HttpRequest request = new HttpRequest(socket);
+		assertEquals("something+useful", request.getPostParameter("area").getValue().get(0));
+		assertEquals("something+less+useful", request.getPostParameter("data").getValue().get(0));
+		assertNull(request.getParameter("area"));
+		assertNull(request.getParameter("data"));
+	}
 }

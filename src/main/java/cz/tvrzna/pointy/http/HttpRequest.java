@@ -21,17 +21,20 @@ import cz.tvrzna.pointy.CaseInsensitiveHashMap;
  */
 public class HttpRequest
 {
+	private static final String CONTENT_TYPE_FORM_URLENCODED = "application/x-www-form-urlencoded";
+
 	private String method;
 	private String uri;
 	private Map<String, String> httpHeaders = new CaseInsensitiveHashMap();
 	private List<HttpParam> params = new ArrayList<>();
+	private List<HttpParam> postParams = new ArrayList<>();
 	private String body;
 	private String clientIp;
 
 	/**
-	 * Instantiates a new <code>HttpRequest</code>. It reads <code>InputStream</code>
-	 * from {@link Socket}, parses it into Http Headers, Url Params and body. It
-	 * also reads client's IP address.
+	 * Instantiates a new <code>HttpRequest</code>. It reads
+	 * <code>InputStream</code> from {@link Socket}, parses it into Http Headers,
+	 * Url Params and body. It also reads client's IP address.
 	 *
 	 * @param socket
 	 *          the socket
@@ -75,31 +78,7 @@ public class HttpRequest
 					uri = strRequestUri[0].trim();
 					if (strRequestUri.length > 1)
 					{
-						String[] params = strRequestUri[1].split("\\&");
-						for (String param : params)
-						{
-							String[] arrParam = new String[2];
-
-							if (param.indexOf("=") > 0)
-							{
-								arrParam[0] = param.substring(0, param.indexOf("="));
-								arrParam[1] = param.substring(param.indexOf("=") + 1, param.length());
-							}
-							else
-							{
-								arrParam[0] = param;
-							}
-							HttpParam httpParam = getParameter(arrParam[0]);
-							if (httpParam == null)
-							{
-								httpParam = new HttpParam(arrParam[0]);
-								this.params.add(httpParam);
-							}
-							if (arrParam[1] != null)
-							{
-								httpParam.getValue().add(arrParam[1]);
-							}
-						}
+						parseParams(strRequestUri[1], params);
 					}
 				}
 				if (line.trim().isEmpty())
@@ -113,9 +92,48 @@ public class HttpRequest
 			}
 		}
 		body = swBody.toString().trim();
+		if (method != null && CONTENT_TYPE_FORM_URLENCODED.equals(httpHeaders.getOrDefault("content-type", "").toLowerCase()))
+		{
+			parseParams(body, postParams);
+		}
 
 		clientIp = socket.getRemoteSocketAddress().toString().replace("/", "");
 		clientIp = clientIp.substring(0, clientIp.lastIndexOf(":"));
+	}
+
+	/**
+	 * Parses the params.
+	 *
+	 * @param strParams
+	 *          the str params
+	 */
+	private void parseParams(String strParams, List<HttpParam> lstParams)
+	{
+		String[] arrParams = strParams.split("\\&");
+		for (String param : arrParams)
+		{
+			String[] arrParam = new String[2];
+
+			if (param.indexOf("=") > 0)
+			{
+				arrParam[0] = param.substring(0, param.indexOf("="));
+				arrParam[1] = param.substring(param.indexOf("=") + 1, param.length());
+			}
+			else
+			{
+				arrParam[0] = param;
+			}
+			HttpParam httpParam = findParameter(lstParams, arrParam[0]);
+			if (httpParam == null)
+			{
+				httpParam = new HttpParam(arrParam[0]);
+				lstParams.add(httpParam);
+			}
+			if (arrParam[1] != null)
+			{
+				httpParam.getValue().add(arrParam[1]);
+			}
+		}
 	}
 
 	/**
@@ -169,6 +187,20 @@ public class HttpRequest
 	}
 
 	/**
+	 * Find parameter.
+	 *
+	 * @param params
+	 *          the params
+	 * @param param
+	 *          the param
+	 * @return the http param
+	 */
+	private HttpParam findParameter(List<HttpParam> params, String param)
+	{
+		return params.stream().filter(httpParam -> httpParam.getKey().equals(param)).findFirst().orElse(null);
+	}
+
+	/**
 	 * Gets the parameter.
 	 *
 	 * @param param
@@ -177,6 +209,19 @@ public class HttpRequest
 	 */
 	public HttpParam getParameter(String param)
 	{
-		return params.stream().filter(httpParam -> httpParam.getKey().equals(param)).findFirst().orElse(null);
+		return findParameter(params, param);
+	}
+
+	/**
+	 * Gets the POST parameter.
+	 *
+	 * @param param
+	 *          the param
+	 * @return the POST parameter
+	 * @since 0.2.0
+	 */
+	public HttpParam getPostParameter(String param)
+	{
+		return findParameter(postParams, param);
 	}
 }
