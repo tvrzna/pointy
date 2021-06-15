@@ -4,7 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import cz.tvrzna.pointy.CaseInsensitiveHashMap;
 public class HttpRequest
 {
 	private static final String CONTENT_TYPE_FORM_URLENCODED = "application/x-www-form-urlencoded";
+	private static final String DEFAULT_CHARSET = "utf-8";
 
 	private String method;
 	private String uri;
@@ -131,7 +134,15 @@ public class HttpRequest
 			}
 			if (arrParam[1] != null)
 			{
-				httpParam.getValue().add(arrParam[1]);
+				try
+				{
+					httpParam.getValue().add(URLDecoder.decode(arrParam[1], DEFAULT_CHARSET));
+				}
+				catch (UnsupportedEncodingException e)
+				{
+					httpParam.getValue().add(arrParam[1]);
+					e.printStackTrace();
+				}
 			}
 		}
 	}

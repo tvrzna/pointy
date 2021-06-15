@@ -75,7 +75,7 @@ public class HttpRequestTest
 	@Test
 	public void testAnotherConstructors() throws IOException
 	{
-		final String httpRequest = "POST /rest/downloads/request?singleParam HTTP/1.1\n" + "Host: localhost:1400\n" + "Content-Type: application/json\n" +
+		final String httpRequest = "POST /rest/downloads/request?singleParam=true+or+false HTTP/1.1\n" + "Host: localhost:1400\n" + "Content-Type: application/json\n" +
 				"Accept: application/json\n" + "client: q4Z9AoVuPXm8oUtGrJ\n" + "user: __#int_dx_user#__\n" + "token: t8JJHzUSDU93Tk_LKVl508OYJ45djfsmAh-iT9x10hw=\n" +
 				"Cache-Control: no-cache\n" + "\n" + "{ \"downloadUrl\" : \"https://localhost:1400/sample-download-file\" }";
 
@@ -86,6 +86,8 @@ public class HttpRequestTest
 
 		HttpRequest request = new HttpRequest(socket);
 		assertEquals(HTTP_CLIENT_IP, request.getClientIp());
+		assertEquals("true or false", request.getParameter("singleParam").getValue().get(0));
+		assertNull(request.getPostParameter("singleParam"));
 	}
 
 	@Test
@@ -116,8 +118,8 @@ public class HttpRequestTest
 		Mockito.when(socketAddress.toString()).thenReturn("127.0.0.1:1555/");
 
 		HttpRequest request = new HttpRequest(socket);
-		assertEquals("something+useful", request.getPostParameter("area").getValue().get(0));
-		assertEquals("something+less+useful", request.getPostParameter("data").getValue().get(0));
+		assertEquals("something useful", request.getPostParameter("area").getValue().get(0));
+		assertEquals("something less useful", request.getPostParameter("data").getValue().get(0));
 		assertNull(request.getParameter("area"));
 		assertNull(request.getParameter("data"));
 	}
