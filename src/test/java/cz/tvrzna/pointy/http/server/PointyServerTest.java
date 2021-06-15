@@ -7,7 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import cz.tvrzna.pointy.exceptions.InternalServerErrorException;
@@ -36,9 +39,20 @@ public class PointyServerTest
 				addRoute(routeA);
 				routeA.ANY("", context -> {
 					counter++;
-					if (counter >= 2)
+					if (counter == 2)
 					{
 						throw new InternalServerErrorException("Error");
+					}
+					else if (counter > 2) {
+						try
+						{
+							Thread.sleep(10l);
+							context.send("ok");
+						}
+						catch (InterruptedException e)
+						{
+							throw new InternalServerErrorException("Error", e);
+						}
 					}
 					else
 					{
@@ -48,7 +62,7 @@ public class PointyServerTest
 			}
 		};
 
-		PointyServer server = new PointyServer("", 0, endpoint);
+		PointyServer server = new PointyServer("", 0, endpoint, 2, 1);
 		assertFalse(server.isRunning());
 		server.stop();
 		server.start();
@@ -56,6 +70,39 @@ public class PointyServerTest
 
 		assertEquals(HttpStatus.OK_200, doConnection(server.getIpAddress(), server.getPort()));
 		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, doConnection(server.getIpAddress(), server.getPort()));
+
+		List<Thread> lstThreads = new ArrayList<>();
+		for (int i = 0; i < 5; i++)
+		{
+			final int threadId = i;
+			lstThreads.add(new Thread(() -> {
+				try
+				{
+					doConnection(server.getIpAddress(), server.getPort());
+					if (threadId > 1)
+					{
+						Assertions.fail("Threads 2, 3 and 4 should not perform correct request to server.");
+					}
+				}
+				catch (IOException e)
+				{
+					if (threadId <= 1)
+					{
+						Assertions.fail("Threads 0 or 1 should not throw any exception", e);
+					}
+				}
+			}));
+		}
+
+		for (Thread thread : lstThreads)
+		{
+			thread.start();
+		}
+
+		for (Thread thread : lstThreads)
+		{
+			thread.join();
+		}
 
 		Thread.sleep(1000l);
 		server.stop();

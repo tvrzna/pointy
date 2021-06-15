@@ -37,6 +37,7 @@ public class PointyServer
 	private ServerSocket server;
 	private final String ipAddress;
 	private final int port;
+	private final long waitTimeoutMs;
 	private final PointyEndpoint endpoint;
 
 	private final Semaphore semaphore;
@@ -45,7 +46,7 @@ public class PointyServer
 	 * Instantiates a new <code>PointyServer</code> on defined
 	 * <code>ipAddress</code>, <code>port</code>. Server will provide defined
 	 * {@link PointyEndpoint}. In this case it allows to create up to 16
-	 * <code>Thread</code>s to handle incoming requests.
+	 * <code>Thread</code>s to handle incoming requests and 30 second waiting timeout.
 	 *
 	 * @param ipAddress
 	 *          the ip address
@@ -56,7 +57,7 @@ public class PointyServer
 	 */
 	public PointyServer(String ipAddress, int port, PointyEndpoint endpoint)
 	{
-		this(ipAddress, port, endpoint, 16);
+		this(ipAddress, port, endpoint, 16, 30000l);
 	}
 
 	/**
@@ -74,11 +75,12 @@ public class PointyServer
 	 * @param maxThreads
 	 *          the max threads
 	 */
-	public PointyServer(String ipAddress, int port, PointyEndpoint endpoint, int maxThreads)
+	public PointyServer(String ipAddress, int port, PointyEndpoint endpoint, int maxThreads, long waitTimeoutMs)
 	{
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.endpoint = endpoint;
+		this.waitTimeoutMs = waitTimeoutMs;
 		semaphore = new Semaphore(maxThreads > 0 ? maxThreads : 1, true);
 	}
 
@@ -90,8 +92,8 @@ public class PointyServer
 	 * should be handled by this <code>PointyServer</code>.<br>
 	 * Any incoming request asks for permit to be handled. If permit is acquired,
 	 * the request is handled as independent <code>Thread</code> in
-	 * {@link PointyEndpoint#handle(HttpContext)}. Request could wait up to 30
-	 * seconds to be handled, otherwise connection is closed.<br>
+	 * {@link PointyEndpoint#handle(HttpContext)}. Request could wait up to <code>waitTimeoutMs</code>
+	 * milliseconds to be handled, otherwise connection is closed.<br>
 	 */
 	public void start()
 	{
@@ -118,7 +120,7 @@ public class PointyServer
 							{
 								@SuppressWarnings("resource")
 								Socket client = server.accept();
-								if (semaphore.tryAcquire(30, TimeUnit.SECONDS))
+								if (semaphore.tryAcquire(waitTimeoutMs, TimeUnit.MILLISECONDS))
 								{
 									new Thread("pointyServerSocket")
 									{
