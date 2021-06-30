@@ -1,5 +1,5 @@
 # pointy
-[![javadoc](https://javadoc.io/badge2/cz.tvrzna/pointy/0.1.0/javadoc.svg)](https://javadoc.io/doc/cz.tvrzna/pointy/0.1.0)
+[![javadoc](https://javadoc.io/badge2/cz.tvrzna/pointy/0.2.0/javadoc.svg)](https://javadoc.io/doc/cz.tvrzna/pointy/0.2.0)
 
 Micro web framework with built-in HTTP server.
 
@@ -11,7 +11,7 @@ Making of micro-service, that should be server-less, often brings tons of depend
 <dependency>
     <groupId>cz.tvrzna</groupId>
     <artifactId>pointy</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
